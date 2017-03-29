@@ -9,6 +9,92 @@
 <link rel="stylesheet" href="<TMPL_VAR BASEURL>local.css" type="text/css" />
 <TMPL_IF NAME="FEEDLINKS"><TMPL_VAR FEEDLINKS></TMPL_IF>
 <TMPL_IF NAME="META"><TMPL_VAR META></TMPL_IF>
+
+<script type="text/javascript">
+ var url = "https://api.github.com/repos/awesomeWM/awesome/issues/1395/comments"
+ var httpRequest
+ var html = ""
+
+ window.onload = function() {
+   if (document.getElementById('screenshot')) {
+     httpRequest = new XMLHttpRequest()
+
+     if (!httpRequest) {
+       console.log('Browser do not support an ajax call.')
+       return false
+     }
+     httpRequest.onreadystatechange = callHandler
+     httpRequest.open('GET', url)
+     httpRequest.send()
+   }
+ }
+
+ function findUrls(text) {
+   var source = (text || '').toString()
+   var urlArray = []
+   var url
+   var matchArray
+
+   // Regular expression to find FTP, HTTP(S) and email URLs.
+   var regexToken = /(((ftp|https?):\/\/)[\-\w@:%_\+.~#?,&\/\/=]+)|((mailto:)?[_.\w-]+@([\w][\w\-]+\.)+[a-zA-Z]{2,3})/g
+
+   // Iterate through any URLs in the text.
+   while ((matchArray = regexToken.exec( source )) !== null) {
+     var token = matchArray[0]
+     urlArray.push(token)
+   }
+
+   return urlArray
+ }
+
+ function imageExists(image_url) {
+   var http = new XMLHttpRequest()
+
+   http.open('HEAD', image_url, false)
+   http.send()
+
+   return http.status != 404
+}
+
+ function worker(data) {
+   for (var i in data) {
+     var body = data[i].body
+     var commentUrl = data[i].html_url
+     var picUrls = findUrls(body)
+
+     console.log(body)
+     
+     for (var j in picUrls) {
+       var image = new Image()
+       image.src = picUrls[j]
+
+       image.onload = function() {
+         var html = ""
+
+         console.log(picUrls[j])
+
+         html += '<figure>'
+         html += '<a href="' + commentUrl + '">'
+         html += '<img src="' + picUrls[j] + '" width="382" height="215" class="img">'
+         html += '</a>'
+         html += '</figure>'
+         
+         document.getElementById("screenshot").innerHTML += html;
+       }
+     }
+   }
+ }
+
+ function callHandler() {
+   if (httpRequest.readyState === XMLHttpRequest.DONE) {
+     if (httpRequest.status === 200) {
+       worker(JSON.parse(httpRequest.responseText))
+     } else {
+       console.log('There was a problem with the request.')
+     }
+   }
+ }
+</script>
 </head>
 <body>
 
